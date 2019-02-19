@@ -27,6 +27,7 @@ class XamppIndicator():
 		if not os.path.exists(self.control_panel_bin):
 			self.control_panel_bin = os.path.join(xampp_path, 'manager-linux.run')
 		self.default_text_editor = 'gedit'
+		self.default_service = 'APACHE'
 		self.serviceMenuItems = {}
 		self.services = {
 			'APACHE': {
@@ -58,14 +59,13 @@ class XamppIndicator():
 		self.menu = Gtk.Menu()
 
 		# Menu Item: Start
-		status_key = 'APACHE'
-		if status_key in self.status and self.status[status_key] == ServiceStatus.On:
+		if self.default_service in self.status and self.status[self.default_service] == ServiceStatus.On:
 			label = 'Stop'
 		else:
 			label = 'Start'
-		startStopItem = Gtk.MenuItem(label)
-		startStopItem.connect('activate', self.start_stop_xampp)
-		self.menu.append(startStopItem)
+		self.startStopItem = Gtk.MenuItem(label)
+		self.startStopItem.connect('activate', self.start_stop_xampp)
+		self.menu.append(self.startStopItem)
 
 		# Menu Item: Restart
 		restartItem = Gtk.MenuItem('Restart')
@@ -160,15 +160,12 @@ class XamppIndicator():
 		label = widget.get_label()
 		widget.set_label(label + '...')
 		# Start or Stop Xampp
-		status_key = 'APACHE'
-		if status_key in self.status and self.status[status_key] == ServiceStatus.On:
+		if self.default_service in self.status and self.status[self.default_service] == ServiceStatus.On:
 			self.stop_service()
-			new_label = 'Start'
 		else:
 			self.start_service()
-			new_label = 'Stop'
 		# Update Status after 10 seconds
-		GLib.timeout_add_seconds(10, self.update_status, widget, new_label)
+		GLib.timeout_add_seconds(10, self.update_status, widget)
 
 	def restart_xampp(self, widget):
 		# Disable Widget
@@ -223,6 +220,11 @@ class XamppIndicator():
 		# Change Widget Label
 		if widget_label is not None:
 			widget.set_label(widget_label)
+		# Change Start/Stop Menu Item Label
+		if self.default_service in self.status and self.status[self.default_service] == ServiceStatus.On:
+			self.startStopItem.set_label('Stop')
+		else:
+			self.startStopItem.set_label('Start')
 		# Enable Widget
 		widget.set_sensitive(True)
 		# Set Indicator Icon
@@ -242,8 +244,7 @@ class XamppIndicator():
 	def set_icon(self, icon_name = None):
 		if icon_name is None:
 			icon_name = 'xampp-dark.svg'
-			status_key = 'APACHE'
-			if status_key in self.status and self.status[status_key] == ServiceStatus.On:
+			if self.default_service in self.status and self.status[self.default_service] == ServiceStatus.On:
 				icon_name = 'xampp.svg'
 		icon = os.path.dirname(os.path.realpath(__file__)) + '/icons/' + icon_name
 		if os.path.exists(icon):

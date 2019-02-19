@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Name=Xampp Indicator
+Comment=A simple AppIndicator for XAMPP on Linux
+Exec=xampp-indicator
+Icon=/usr/share/xampp-indicator/icons/xampp.svg
+Terminal=false
+StartupNotify=true
+Type=Application
+Categories=GNOME;GTK;Utility;

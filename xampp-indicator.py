@@ -28,25 +28,23 @@ class XamppIndicator():
 			self.control_panel_bin = os.path.join(xampp_path, 'manager-linux.run')
 		self.pkexec_args = ['pkexec', 'env', 'DISPLAY=' + os.getenv('DISPLAY'), 'XAUTHORITY=' + os.getenv('XAUTHORITY')]
 		self.default_text_editor = 'gedit'
-		self.default_service = 'APACHE'
-		self.serviceMenuItems = {}
+		self.master_service = 'APACHE'
 		self.services = {
 			'APACHE': {
 				'label': 'Apache',
 				'name': 'apache',
-				'status_key': 'APACHE'
+				'process': 'lampp/bin'
 			},
 			'MYSQL': {
 				'label': 'MySQL',
 				'name': 'mysql',
-				'status_key': 'APACHE' # i used APACHE status here because MYSQL status returns Off when get status command is not executed as administrator (using pkexec or sudo)
+				'process': 'mysqld'
 			}
 			,
 			'PROFTPD': {
 				'label': 'FTP',
 				'name': 'ftp',
-				#'enabled': True,
-				'status_key': 'PROFTPD'
+				'process': 'proftpd'
 			}
 		}
 
@@ -60,26 +58,28 @@ class XamppIndicator():
 		self.menu = Gtk.Menu()
 
 		# Menu Item: Start
-		if self.default_service in self.status and self.status[self.default_service] == ServiceStatus.On:
+		if self.is_service_running(self.master_service):
 			label = 'Stop'
+			restart_sensitivity = True
 		else:
 			label = 'Start'
+			restart_sensitivity = False
 		self.startStopItem = Gtk.MenuItem(label)
 		self.startStopItem.connect('activate', self.start_stop_xampp)
 		self.menu.append(self.startStopItem)
 
 		# Menu Item: Restart
-		restartItem = Gtk.MenuItem('Restart')
-		restartItem.connect('activate', self.restart_xampp)
-		self.menu.append(restartItem)
+		self.restartItem = Gtk.MenuItem('Restart')
+		self.restartItem.set_sensitive(restart_sensitivity)
+		self.restartItem.connect('activate', self.restart_xampp)
+		self.menu.append(self.restartItem)
 		self.menu.append(Gtk.SeparatorMenuItem())
 
 		# Service Menu Items
+		self.serviceMenuItems = {}
 		for service in self.services:
 			self.serviceMenuItems[service] = Gtk.CheckMenuItem(self.services[service]['label'])
-			if 'enabled' not in self.services[service] or not self.services[service]['enabled']:
-				self.serviceMenuItems[service].set_sensitive(False) # Disable service toggle due to MYSQL get status issue
-			if self.services[service]['status_key'] in self.status and self.status[self.services[service]['status_key']] == ServiceStatus.On:
+			if self.is_service_running(service):
 				self.serviceMenuItems[service].set_active(True)
 			self.serviceMenuItems[service].connect('activate', self.toggle_service, service)
 			self.menu.append(self.serviceMenuItems[service])
@@ -118,7 +118,7 @@ class XamppIndicator():
 		self.menu.append(aboutItem)
 
 		# Menu Item: Quit
-		exitItem = Gtk.MenuItem('Quit')
+		exitItem = Gtk.MenuItem('Quit\t\t\t\t\t') # tabulations used to get some space
 		exitItem.connect('activate', self.quit)
 		self.menu.append(exitItem)
 
@@ -139,6 +139,19 @@ class XamppIndicator():
 			service = line.split(' ')
 			if service[0] in status:
 				status[service[0]] = service[1]
+		# Since MYSQL status needs root access to be retrieved, we check the system processes
+		processes = subprocess.getoutput('ps -A')
+		# Create a list of XAMPP processes as ['process_name': 'service']
+		xampp_processes = {}
+		for service in self.services:
+			xampp_processes[self.services[service]['process']] = service
+		lines = processes.split('\n')
+		for line in lines[1:]: # Ignore first line
+			process = line[::-1].split(' ') # Reverse string to set process name at beginning
+			process_name = process[0][::-1]
+			if process_name in xampp_processes:
+				status[xampp_processes[process_name]] = ServiceStatus.On
+		# Print services status
 		for service in status:
 			print('%s %s' % (service, status[service]))
 		print('-' * 24)
@@ -161,10 +174,14 @@ class XamppIndicator():
 		subprocess.Popen(self.pkexec_args + [self.control_panel_bin])
 
 	def start_stop_xampp(self, widget):
+		# Disable Restart & Services Menu Items
+		self.restartItem.set_sensitive(False)
+		for service in self.services:
+			self.serviceMenuItems[service].set_sensitive(False)
 		# Disable Widget
 		widget.set_sensitive(False)
 		# Start or Stop Xampp
-		if self.default_service in self.status and self.status[self.default_service] == ServiceStatus.On:
+		if self.is_service_running(self.master_service):
 			widget.set_label('Stopping...')
 			self.stop_service()
 		else:
@@ -174,6 +191,10 @@ class XamppIndicator():
 		GLib.timeout_add_seconds(10, self.update_status, widget)
 
 	def restart_xampp(self, widget):
+		# Disable Start/Stop & Services Menu Items
+		self.startStopItem.set_sensitive(False)
+		for service in self.services:
+			self.serviceMenuItems[service].set_sensitive(False)
 		# Disable Widget
 		widget.set_sensitive(False)
 		# Set Indicator Icon 'Off'
@@ -188,6 +209,9 @@ class XamppIndicator():
 
 	def toggle_service(self, widget, service):
 		if widget.get_sensitive():
+			# Disable Start/Stop/Restart Menu Items
+			self.startStopItem.set_sensitive(False)
+			self.restartItem.set_sensitive(False)
 			# Change Widget Label
 			label = widget.get_label()
 			widget.set_label(label + '...')
@@ -206,7 +230,7 @@ class XamppIndicator():
 		self.status = self.get_xampp_status()
 		if service is not None:
 			# Update Widget
-			if self.services[service]['status_key'] in self.status and self.status[self.services[service]['status_key']] == ServiceStatus.On:
+			if self.is_service_running(service):
 				widget.set_active(True)
 			else:
 				widget.set_active(False)
@@ -214,27 +238,29 @@ class XamppIndicator():
 			# Update All Service Menu Items
 			for service in self.services:
 				service_menu_item = self.serviceMenuItems[service]
-				was_sensitive = service_menu_item.get_sensitive()
-				if was_sensitive:
+				if service_menu_item.get_sensitive():
 					service_menu_item.set_sensitive(False)
-				if self.services[service]['status_key'] in self.status and self.status[self.services[service]['status_key']] == ServiceStatus.On:
+				if self.is_service_running(service):
 					service_menu_item.set_active(True)
 				else:
 					service_menu_item.set_active(False)
-				if was_sensitive:
-					service_menu_item.set_sensitive(True)
+				service_menu_item.set_sensitive(True)
 		# Change Widget Label
 		if widget_label is not None:
 			widget.set_label(widget_label)
-		# Change Start/Stop Menu Item Label
-		if self.default_service in self.status and self.status[self.default_service] == ServiceStatus.On:
-			self.startStopItem.set_label('Stop')
-		else:
-			self.startStopItem.set_label('Start')
 		# Enable Widget
 		widget.set_sensitive(True)
 		# Set Indicator Icon
 		self.set_icon()
+		# Change Start/Stop Menu Item Label & sensitivity
+		if self.is_service_running(self.master_service):
+			self.startStopItem.set_label('Stop')
+			self.startStopItem.set_sensitive(True)
+			self.restartItem.set_sensitive(True)
+		else:
+			self.startStopItem.set_label('Start')
+			self.startStopItem.set_sensitive(True)
+			self.restartItem.set_sensitive(False)
 
 		return False # Do not loop
 
@@ -247,10 +273,13 @@ class XamppIndicator():
 	def restart_service(self, service_name = ''):
 		subprocess.Popen(self.pkexec_args + [self.xampp_bin, 'reload' + service_name])
 
+	def is_service_running(self, service):
+		return service in self.status and self.status[service] == ServiceStatus.On
+
 	def set_icon(self, icon_name = None):
 		if icon_name is None:
 			icon_name = 'xampp-dark.svg'
-			if self.default_service in self.status and self.status[self.default_service] == ServiceStatus.On:
+			if self.is_service_running(self.master_service):
 				icon_name = 'xampp.svg'
 		icon = os.path.dirname(os.path.realpath(__file__)) + '/icons/' + icon_name
 		if os.path.exists(icon):

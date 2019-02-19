@@ -9,7 +9,7 @@ import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('AppIndicator3', '0.1')
 from gi.repository import Gtk, GdkPixbuf, GLib, AppIndicator3 as AppIndicator
-import os, subprocess
+import os, subprocess, webbrowser
 
 class ServiceStatus:
 	On, Off, Disabled = ('RUNNING', 'NOTRUNNING', 'DEACTIVATED')
@@ -26,6 +26,7 @@ class XamppIndicator():
 		self.control_panel_bin = os.path.join(xampp_path, 'manager-linux-x64.run')
 		if not os.path.exists(self.control_panel_bin):
 			self.control_panel_bin = os.path.join(xampp_path, 'manager-linux.run')
+		self.default_text_editor = 'gedit'
 		self.serviceMenuItems = {}
 		self.services = {
 			'APACHE': {
@@ -83,10 +84,25 @@ class XamppIndicator():
 			self.menu.append(self.serviceMenuItems[service])
 		self.menu.append(Gtk.SeparatorMenuItem())
 
-		# Menu Item: Control Panel
-		controlPanelItem = Gtk.MenuItem('Control Panel')
-		controlPanelItem.connect('activate', self.launch_control_panel)
-		self.menu.append(controlPanelItem)
+		# Menu Item: Open htdocs
+		openHtdocsItem = Gtk.MenuItem('Open htdocs')
+		openHtdocsItem.connect('activate', self.open_path, xampp_path + '/htdocs')
+		self.menu.append(openHtdocsItem)
+
+		# Menu Item: Edit php.ini
+		editPhpIniItem = Gtk.MenuItem('Edit php.ini')
+		editPhpIniItem.connect('activate', self.open_file_in_editor, xampp_path + '/etc/php.ini')
+		self.menu.append(editPhpIniItem)
+
+		# Menu Item: Launch phpMyAdmin
+		launchPhpMyAdminItem = Gtk.MenuItem('Launch phpMyAdmin')
+		launchPhpMyAdminItem.connect('activate', self.open_url, 'http://localhost/phpmyadmin/')
+		self.menu.append(launchPhpMyAdminItem)
+
+		# Menu Item: Launch Control Panel
+		launchControlPanelItem = Gtk.MenuItem('Launch Control Panel')
+		launchControlPanelItem.connect('activate', self.launch_control_panel)
+		self.menu.append(launchControlPanelItem)
 		self.menu.append(Gtk.SeparatorMenuItem())
 
 		# Menu Item: About
@@ -121,6 +137,18 @@ class XamppIndicator():
 		print('-' * 24)
 
 		return status
+
+	def open_file_in_editor(self, widget, filename):
+		editor = os.getenv('EDITOR')
+		if editor is None:
+			editor = self.default_text_editor
+		subprocess.Popen(['pkexec', editor, filename])
+
+	def open_path(self, widget, path):
+		subprocess.Popen(['xdg-open', path])
+
+	def open_url(self, widget, url):
+		webbrowser.open(url)
 
 	def launch_control_panel(self, widget):
 		subprocess.Popen(['pkexec', self.control_panel_bin])
@@ -226,15 +254,15 @@ class XamppIndicator():
 	def about(self, widget):
 		about_dialog = Gtk.AboutDialog()
 		about_dialog.set_position(Gtk.WindowPosition.CENTER)
-		logo = GdkPixbuf.Pixbuf.new_from_file(os.path.dirname(os.path.realpath(__file__)) + "/icons/xampp.svg")
+		logo = GdkPixbuf.Pixbuf.new_from_file(os.path.dirname(os.path.realpath(__file__)) + '/icons/xampp.svg')
 		about_dialog.set_logo(logo)
-		about_dialog.set_program_name("Xampp Indicator")
-		about_dialog.set_version("1.0")
-		about_dialog.set_comments("A simple AppIndicator for XAMPP on Linux")
-		about_dialog.set_website("https://github.com/AXeL-dev/xampp-indicator")
-		about_dialog.set_website_label("GitHub")
-		about_dialog.set_copyright("Copyright © 2019 AXeL-dev")
-		about_dialog.set_authors(["AXeL-dev <contact.axel.dev@gmail.com> (Developer)"])
+		about_dialog.set_program_name('Xampp Indicator')
+		about_dialog.set_version('1.0')
+		about_dialog.set_comments('A simple AppIndicator for XAMPP on Linux')
+		about_dialog.set_website('https://github.com/AXeL-dev/xampp-indicator')
+		about_dialog.set_website_label('GitHub')
+		about_dialog.set_copyright('Copyright © 2019 AXeL-dev')
+		about_dialog.set_authors(['AXeL-dev <contact.axel.dev@gmail.com> (Developer)'])
 		about_dialog.set_license('''Xampp Indicator, A simple AppIndicator for XAMPP on Linux.
 Copyright © 2019 AXeL-dev
 

@@ -5,15 +5,15 @@
 
 <policyconfig>
 
-  <action id="org.freedesktop.policykit.pkexec.run-xampp-control-panel">
-    <description>Run Xampp Control Panel</description>
-    <message>Authentication is required to run Xampp Control Panel</message>
+  <action id="org.freedesktop.policykit.pkexec.run-gedit">
+    <description>Run Gedit</description>
+    <message>Authentication is required to run gedit</message>
     <defaults>
       <allow_any>no</allow_any>
       <allow_inactive>no</allow_inactive>
       <allow_active>auth_admin_keep</allow_active>
     </defaults>
-    <annotate key="org.freedesktop.policykit.exec.path">/opt/lampp/manager-linux-x64.run</annotate>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/bin/gedit</annotate>
     <annotate key="org.freedesktop.policykit.exec.allow_gui">TRUE</annotate>
   </action>
 

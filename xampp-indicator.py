@@ -84,25 +84,31 @@ class XamppIndicator():
 			self.menu.append(self.serviceMenuItems[service])
 		self.menu.append(Gtk.SeparatorMenuItem())
 
+		# Menu Item: PHP
+		phpMenu = Gtk.Menu()
+		phpItem = Gtk.MenuItem('PHP')
+		phpItem.set_submenu(phpMenu)
+		self.menu.append(phpItem)
+
+		# SubMenu Item: Edit php.ini
+		editPhpIniItem = Gtk.MenuItem('Edit php.ini')
+		editPhpIniItem.connect('activate', self.open_file_in_editor, xampp_path + '/etc/php.ini')
+		phpMenu.append(editPhpIniItem)
+
+		# SubMenu Item: Launch phpMyAdmin
+		launchPhpMyAdminItem = Gtk.MenuItem('Launch phpMyAdmin')
+		launchPhpMyAdminItem.connect('activate', self.open_url, 'http://localhost/phpmyadmin/')
+		phpMenu.append(launchPhpMyAdminItem)
+
 		# Menu Item: Open htdocs
 		openHtdocsItem = Gtk.MenuItem('Open htdocs')
 		openHtdocsItem.connect('activate', self.open_path, xampp_path + '/htdocs')
 		self.menu.append(openHtdocsItem)
 
-		# Menu Item: Edit php.ini
-		editPhpIniItem = Gtk.MenuItem('Edit php.ini')
-		editPhpIniItem.connect('activate', self.open_file_in_editor, xampp_path + '/etc/php.ini')
-		self.menu.append(editPhpIniItem)
-
-		# Menu Item: Launch phpMyAdmin
-		launchPhpMyAdminItem = Gtk.MenuItem('Launch phpMyAdmin')
-		launchPhpMyAdminItem.connect('activate', self.open_url, 'http://localhost/phpmyadmin/')
-		self.menu.append(launchPhpMyAdminItem)
-
-		# Menu Item: Launch Control Panel
-		launchControlPanelItem = Gtk.MenuItem('Launch Control Panel')
-		launchControlPanelItem.connect('activate', self.launch_control_panel)
-		self.menu.append(launchControlPanelItem)
+		# Menu Item: Control Panel
+		controlPanelItem = Gtk.MenuItem('Control Panel')
+		controlPanelItem.connect('activate', self.launch_control_panel)
+		self.menu.append(controlPanelItem)
 		self.menu.append(Gtk.SeparatorMenuItem())
 
 		# Menu Item: About
@@ -156,13 +162,12 @@ class XamppIndicator():
 	def start_stop_xampp(self, widget):
 		# Disable Widget
 		widget.set_sensitive(False)
-		# Change Widget Label
-		label = widget.get_label()
-		widget.set_label(label + '...')
 		# Start or Stop Xampp
 		if self.default_service in self.status and self.status[self.default_service] == ServiceStatus.On:
+			widget.set_label('Stopping...')
 			self.stop_service()
 		else:
+			widget.set_label('Starting...')
 			self.start_service()
 		# Update Status after 10 seconds
 		GLib.timeout_add_seconds(10, self.update_status, widget)
@@ -174,7 +179,7 @@ class XamppIndicator():
 		self.set_icon('xampp-dark.svg')
 		# Change Widget Label
 		label = widget.get_label()
-		widget.set_label(label + '...')
+		widget.set_label('Restarting...')
 		# Restart Xampp
 		self.restart_service()
 		# Update Status after 10 seconds

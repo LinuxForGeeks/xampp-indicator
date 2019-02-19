@@ -26,6 +26,7 @@ class XamppIndicator():
 		self.control_panel_bin = os.path.join(xampp_path, 'manager-linux-x64.run')
 		if not os.path.exists(self.control_panel_bin):
 			self.control_panel_bin = os.path.join(xampp_path, 'manager-linux.run')
+		self.pkexec_args = ['pkexec', 'env', 'DISPLAY=' + os.getenv('DISPLAY'), 'XAUTHORITY=' + os.getenv('XAUTHORITY')]
 		self.default_text_editor = 'gedit'
 		self.default_service = 'APACHE'
 		self.serviceMenuItems = {}
@@ -148,7 +149,7 @@ class XamppIndicator():
 		editor = os.getenv('EDITOR')
 		if editor is None:
 			editor = self.default_text_editor
-		subprocess.Popen(['pkexec', editor, filename])
+		subprocess.Popen(self.pkexec_args + [editor, filename])
 
 	def open_path(self, widget, path):
 		subprocess.Popen(['xdg-open', path])
@@ -157,7 +158,7 @@ class XamppIndicator():
 		webbrowser.open(url)
 
 	def launch_control_panel(self, widget):
-		subprocess.Popen(['pkexec', self.control_panel_bin])
+		subprocess.Popen(self.pkexec_args + [self.control_panel_bin])
 
 	def start_stop_xampp(self, widget):
 		# Disable Widget
@@ -238,13 +239,13 @@ class XamppIndicator():
 		return False # Do not loop
 
 	def start_service(self, service_name = ''):
-		subprocess.Popen(['pkexec', self.xampp_bin, 'start' + service_name])
+		subprocess.Popen(self.pkexec_args + [self.xampp_bin, 'start' + service_name])
 
 	def stop_service(self, service_name = ''):
-		subprocess.Popen(['pkexec', self.xampp_bin, 'stop' + service_name])
+		subprocess.Popen(self.pkexec_args + [self.xampp_bin, 'stop' + service_name])
 
 	def restart_service(self, service_name = ''):
-		subprocess.Popen(['pkexec', self.xampp_bin, 'reload' + service_name])
+		subprocess.Popen(self.pkexec_args + [self.xampp_bin, 'reload' + service_name])
 
 	def set_icon(self, icon_name = None):
 		if icon_name is None:

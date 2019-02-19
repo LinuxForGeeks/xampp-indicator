@@ -9,7 +9,7 @@ sh uninstall.sh
 
 mkdir /usr/share/xampp-indicator
 cp -R icons /usr/share/xampp-indicator/
-cp -R *.policy /usr/share/polkit-1/actions/
+cp *.policy /usr/share/polkit-1/actions/
 
 cp *.py /usr/share/xampp-indicator/
 chmod 755 -R /usr/share/xampp-indicator/

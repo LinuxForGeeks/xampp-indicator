@@ -8,7 +8,7 @@
 import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('AppIndicator3', '0.1')
-from gi.repository import Gtk, GLib, AppIndicator3 as AI
+from gi.repository import Gtk, GdkPixbuf, GLib, AppIndicator3 as AppIndicator
 import os, subprocess
 
 class ServiceStatus:
@@ -17,8 +17,8 @@ class ServiceStatus:
 class XamppIndicator():
 	def __init__(self):
 		# Setup Indicator Applet
-		self.indicator = AI.Indicator.new('xampp-indicator', 'xampp', AI.IndicatorCategory.APPLICATION_STATUS)
-		self.indicator.set_status(AI.IndicatorStatus.ACTIVE)
+		self.indicator = AppIndicator.Indicator.new('xampp-indicator', 'xampp', AppIndicator.IndicatorCategory.APPLICATION_STATUS)
+		self.indicator.set_status(AppIndicator.IndicatorStatus.ACTIVE)
 
 		# Set Attributes
 		xampp_path = '/opt/lampp'
@@ -88,6 +88,11 @@ class XamppIndicator():
 		controlPanelItem.connect('activate', self.launch_control_panel)
 		self.menu.append(controlPanelItem)
 		self.menu.append(Gtk.SeparatorMenuItem())
+
+		# Menu Item: About
+		aboutItem = Gtk.MenuItem('About')
+		aboutItem.connect('activate', self.about)
+		self.menu.append(aboutItem)
 
 		# Menu Item: Quit
 		exitItem = Gtk.MenuItem('Quit')
@@ -217,6 +222,36 @@ class XamppIndicator():
 			self.indicator.set_icon(icon)
 		else:
 			print('ERROR: Cannot find icon %s' % icon)
+
+	def about(self, widget):
+		about_dialog = Gtk.AboutDialog()
+		about_dialog.set_position(Gtk.WindowPosition.CENTER)
+		logo = GdkPixbuf.Pixbuf.new_from_file(os.path.dirname(os.path.realpath(__file__)) + "/icons/xampp.svg")
+		about_dialog.set_logo(logo)
+		about_dialog.set_program_name("Xampp Indicator")
+		about_dialog.set_version("1.0")
+		about_dialog.set_comments("A simple AppIndicator for XAMPP on Linux")
+		about_dialog.set_website("https://github.com/AXeL-dev/xampp-indicator")
+		about_dialog.set_website_label("GitHub")
+		about_dialog.set_copyright("Copyright © 2019 AXeL-dev")
+		about_dialog.set_authors(["AXeL-dev <contact.axel.dev@gmail.com> (Developer)"])
+		about_dialog.set_license('''Xampp Indicator, A simple AppIndicator for XAMPP on Linux.
+Copyright © 2019 AXeL-dev
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.''')
+		about_dialog.run()
+		about_dialog.destroy()
 
 	def quit(self, widget):
 		Gtk.main_quit()

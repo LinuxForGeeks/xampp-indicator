@@ -212,15 +212,15 @@ class XamppIndicator():
 			# Disable Start/Stop/Restart Menu Items
 			self.startStopItem.set_sensitive(False)
 			self.restartItem.set_sensitive(False)
-			# Change Widget Label
-			label = widget.get_label()
-			widget.set_label(label + '...')
 			# Disable Widget
 			widget.set_sensitive(False)
 			# Toggle Service
+			label = self.services[service]['label']
 			if self.status[service] == ServiceStatus.On:
+				widget.set_label('Stopping ' + label + '...')
 				self.stop_service(self.services[service]['name'])
 			else:
+				widget.set_label('Starting ' + label + '...')
 				self.start_service(self.services[service]['name'])
 			# Update Status after 10 seconds
 			GLib.timeout_add_seconds(10, self.update_status, widget, label, service)

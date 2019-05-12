@@ -28,6 +28,10 @@ To uninstall run:
 sudo ./uninstall.sh
 ```
 
+## Update
+
+Simply run the install script in `sudo` mode & all files should be updated.
+
 ## License
 
 XAMPP Indicator is licensed under the [GPL license](LICENSE).

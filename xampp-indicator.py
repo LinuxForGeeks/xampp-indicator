@@ -198,8 +198,8 @@ class XamppIndicator():
 		else:
 			widget.set_label('Starting...')
 			self.start_service()
-		# Update Status after 10 seconds
-		GLib.timeout_add_seconds(10, self.update_status, widget)
+		# Update Status after 5 seconds
+		GLib.timeout_add_seconds(5, self.update_status, widget, None, None, True)
 
 	def restart_xampp(self, widget):
 		# Disable Start/Stop & Services Menu Items
@@ -236,8 +236,9 @@ class XamppIndicator():
 			# Update Status after 10 seconds
 			GLib.timeout_add_seconds(10, self.update_status, widget, label, service)
 
-	def update_status(self, widget, widget_label = None, service = None):
+	def update_status(self, widget, widget_label = None, service = None, loop = False):
 		# Update Xampp Status
+		old_status = self.status
 		self.status = self.get_xampp_status()
 		if service is not None:
 			# Update Widget
@@ -272,8 +273,18 @@ class XamppIndicator():
 			self.startStopItem.set_label('Start')
 			self.startStopItem.set_sensitive(True)
 			self.restartItem.set_sensitive(False)
+		# Check if status changed
+		if not loop or self.status_changed(old_status):
+			return False # Do not loop
+		else:
+			return True # Loop
 
-		return False # Do not loop
+	def status_changed(self, old_status):
+		for service in self.services:
+			if self.status[service] != old_status[service]:
+				return True
+
+		return False
 
 	def start_service(self, service_name = ''):
 		subprocess.Popen(self.pkexec_args + [self.xampp_bin, 'start' + service_name])

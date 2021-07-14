@@ -76,6 +76,9 @@ class XamppIndicator():
 		self.menu.append(Gtk.SeparatorMenuItem())
 
 		# Service Menu Items
+		servicesItem = Gtk.MenuItem('Services')
+		servicesItem.set_sensitive(False)
+		self.menu.append(servicesItem)
 		self.serviceMenuItems = {}
 		for service in self.services:
 			self.serviceMenuItems[service] = Gtk.CheckMenuItem(self.services[service]['label'])
@@ -112,21 +115,15 @@ class XamppIndicator():
 		self.menu.append(controlPanelItem)
 		self.menu.append(Gtk.SeparatorMenuItem())
 
-		# Menu Item: Indicator
-		indicatorMenu = Gtk.Menu()
-		indicatorItem = Gtk.MenuItem('Indicator')
-		indicatorItem.set_submenu(indicatorMenu)
-		self.menu.append(indicatorItem)
-
-		# SubMenu Item: Refresh
+		# Menu Item: Refresh
 		refreshItem = Gtk.MenuItem('Refresh')
 		refreshItem.connect('activate', self.update_status)
-		indicatorMenu.append(refreshItem)
+		self.menu.append(refreshItem)
 
-		# SubMenu Item: About
+		# Menu Item: About
 		aboutItem = Gtk.MenuItem('About')
 		aboutItem.connect('activate', self.about)
-		indicatorMenu.append(aboutItem)
+		self.menu.append(aboutItem)
 
 		# Menu Item: Quit
 		exitItem = Gtk.MenuItem('Quit\t\t\t\t\t') # tabulations used to get some space
